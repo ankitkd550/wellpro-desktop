@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WellPro ERP</title>
+  <style>
+    * { box-sizing: border-box; font-family: Segoe UI, Arial, sans-serif; }
+    body { margin: 0; background: #f4f6f8; }
+    #loginScreen { display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 340px; }
+    .login-box h1 { color: #0d6b6b; margin-top: 0; font-size: 22px; }
+    .login-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .login-box button { width: 100%; padding: 12px; margin-top: 12px; background: #0d6b6b; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
+    .login-box button:hover { background: #0a5555; }
+    #loginError { color: #d33; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    #changeLicenseLink { display: none; font-size: 12px; color: #0d6b6b; text-align: center; margin-top: 10px; cursor: pointer; text-decoration: underline; }
+    #dashboardScreen { display: none; }
+    .topbar { background: #0d6b6b; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .tabs { display: flex; gap: 4px; padding: 0 24px; background: #0a5555; }
+    .tab-btn { background: transparent; border: none; color: #cfe8e8; padding: 12px 20px; cursor: pointer; font-size: 14px; }
+    .tab-btn.active { background: #f4f6f8; color: #0d6b6b; font-weight: bold; border-radius: 8px 8px 0 0; }
+    .new-window-btn { background: transparent; border: none; color: #9cc; cursor: pointer; font-size: 15px; padding: 12px 6px; margin-right: 6px; }
+    .new-window-btn:hover { color: white; }
+    .content { padding: 24px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-top: 12px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+    th { background: #eef3f3; }
+    #logoutBtn { background: transparent; border: 1px solid white; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .card h2 { margin-top: 0; font-size: 18px; color: #333; }
+    .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+    .form-row input, .form-row select { flex: 1; min-width: 140px; padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .btn-primary { background: #0d6b6b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .btn-primary:hover { background: #0a5555; }
+    .btn-secondary { background: #eef3f3; color: #0d6b6b; border: 1px solid #0d6b6b; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .btn-danger { background: #d33; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+    #addItemMsg, #billMsg, #purchaseMsg, #supplierMsg { font-size: 13px; margin-top: 8px; min-height: 18px; }
+    #addItemMsg.success, #billMsg.success, #purchaseMsg.success, #supplierMsg.success { color: #1a7a1a; }
+    #addItemMsg.error, #billMsg.error, #purchaseMsg.error, #supplierMsg.error { color: #d33; }
+
+    .totals-box { text-align: right; margin-top: 12px; font-size: 14px; }
+    .totals-box .grand-total { font-size: 20px; font-weight: bold; color: #0d6b6b; }
+    .small-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+  <div id="loginScreen">
+    <div class="login-box">
+      <h1>WellPro ERP Login</h1>
+      <div id="licenseKeyRow">
+        <input type="text" id="licenseKey" placeholder="License Key (e.g. WELLPRO-XXXX-XXXX-XXXX)">
+      </div>
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button id="loginBtn">Login</button>
+      <div id="loginError"></div>
+      <div id="changeLicenseLink">Change License Key</div>
+    </div>
+  </div>
+
+  <div id="dashboardScreen">
+    <div class="topbar">
+      <div><strong id="welcomeText">WellPro ERP</strong></div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-page="billingPage">Billing</button>
+      <button class="new-window-btn" data-page="billingPage" title="Open Billing in a new window">⧉</button>
+      <button class="tab-btn" data-page="purchasePage">Purchase</button>
+      <button class="new-window-btn" data-page="purchasePage" title="Open Purchase in a new window">⧉</button>
+      <button class="tab-btn" data-page="inventoryPage">Inventory</button>
+      <button class="new-window-btn" data-page="inventoryPage" title="Open Inventory in a new window">⧉</button>
+      <button class="tab-btn" data-page="dashboardPage">Dashboard</button>
+      <button class="new-window-btn" data-page="dashboardPage" title="Open Dashboard in a new window">⧉</button>
+    </div>
+    <div class="content">
+
+      <!-- BILLING PAGE -->
+      <div id="billingPage" class="page active">
+        <div class="card">
+          <h2>Create Bill</h2>
+          <div class="form-row">
+            <select id="billItemSelect">
+              <option value="">Select Item</option>
+            </select>
+            <select id="billBatchSelect">
+              <option value="">Select Batch</option>
+            </select>
+            <input type="number" id="billQuantity" placeholder="Quantity" min="1">
+            <button class="btn-primary" id="addToBillBtn">Add to Bill</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Batch</th><th>Qty</th><th>Rate</th><th>Amount</th><th></th></tr>
+            </thead>
+            <tbody id="billCartBody">
+              <tr><td colspan="6">No items added yet.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="totals-box">
+            <div>Subtotal: ₹<span id="billSubtotal">0.00</span></div>
+            <div>GST: ₹<span id="billGst">0.00</span></div>
+            <div class="grand-total">Total: ₹<span id="billTotal">0.00</span></div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <select id="billPaymentMode">
+              <option value="cash">Cash</option>
+              <option value="upi">UPI</option>
+              <option value="card">Card</option>
+            </select>
+            <button class="btn-primary" id="completeBillBtn">Complete Bill</button>
+          </div>
+          <div id="billMsg"></div>
+        </div>
+      </div>
+
+      <!-- PURCHASE PAGE -->
+      <div id="purchasePage" class="page">
+        <div class="card">
+          <h2>Add Supplier</h2>
+          <div class="form-row">
+            <input type="text" id="newSupplierName" placeholder="Supplier Name">
+            <input type="text" id="newSupplierPhone" placeholder="Phone">
+            <button class="btn-secondary" id="addSupplierBtn">Add Supplier</button>
+          </div>
+          <div id="supplierMsg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Create Purchase (Stock In)</h2>
+          <div class="form-row">
+            <select id="purchaseSupplierSelect">
+              <option value="">Select Supplier</option>
+            </select>
+            <input type="text" id="purchaseInvoiceNo" placeholder="Supplier Invoice No.">
+          </div>
+
+          <div class="small-label">Add items to this purchase:</div>
+          <div class="form-row">
+            <select id="purchaseItemSelect">
+              <option value="">Select Item</option>
+            </select>
+            <input type="text" id="purchaseBatchNo" placeholder="Batch No.">
+            <input type="date" id="purchaseExpiry">
+          </div>
+          <div class="form-row">
+            <input type="number" id="purchaseMrp" placeholder="MRP">
+            <input type="number" id="purchaseRate" placeholder="Purchase Rate">
+            <input type="number" id="purchaseSaleRate" placeholder="Sale Rate">
+            <input type="number" id="purchaseQty" placeholder="Quantity" min="1">
+            <button class="btn-primary" id="addToPurchaseBtn">Add Item</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Rate</th><th>Amount</th><th></th></tr>
+            </thead>
+            <tbody id="purchaseCartBody">
+              <tr><td colspan="7">No items added yet.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="totals-box">
+            <div class="grand-total">Total: ₹<span id="purchaseTotal">0.00</span></div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <button class="btn-primary" id="completePurchaseBtn">Complete Purchase</button>
+          </div>
+          <div id="purchaseMsg"></div>
+        </div>
+      </div>
+
+      <!-- INVENTORY PAGE -->
+      <div id="inventoryPage" class="page">
+        <div class="card">
+          <h2>Add New Item</h2>
+          <div class="form-row">
+            <input type="text" id="newItemName" placeholder="Item Name (e.g. Paracetamol 500mg)">
+            <input type="text" id="newItemGeneric" placeholder="Generic Name">
+            <input type="text" id="newItemManufacturer" placeholder="Manufacturer">
+          </div>
+          <div class="form-row">
+            <select id="newItemUnit">
+              <option value="strip">Strip</option>
+              <option value="box">Box</option>
+              <option value="bottle">Bottle</option>
+              <option value="piece">Piece</option>
+            </select>
+            <input type="number" id="newItemGst" placeholder="GST %" value="12">
+          </div>
+          <button class="btn-primary" id="addItemBtn">Add Item</button>
+          <div id="addItemMsg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Inventory Items</h2>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Generic Name</th><th>Manufacturer</th><th>Unit</th><th>GST %</th></tr>
+            </thead>
+            <tbody id="itemsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DASHBOARD PAGE -->
+      <div id="dashboardPage" class="page">
+        <div class="card">
+          <h2>Low Stock Alerts</h2>
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Current Stock</th><th>Reorder Level</th></tr>
+            </thead>
+            <tbody id="lowStockBody">
+              <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Expiring Soon (within 30 days)</h2>
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Batch</th><th>Expiry Date</th><th>Stock</th></tr>
+            </thead>
+            <tbody id="expiringSoonBody">
+              <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Recent Sales</h2>
+          <table>
+            <thead>
+              <tr><th>Invoice No.</th><th>Date</th><th>Payment Mode</th><th>Total</th></tr>
+            </thead>
+            <tbody id="recentSalesBody">
+              <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
