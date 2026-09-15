@@ -95,6 +95,9 @@ function switchToTab(pageId) {
   if (pageId === 'returnsPage') {
     loadInvoicesForReturn();
   }
+  if (pageId === 'inventoryPage') {
+    loadStockReport();
+  }
 }
 
 // Sidebar quick access clicks
@@ -294,6 +297,16 @@ async function loadItems() {
       opt.textContent = item.name;
       purchaseSelect.appendChild(opt);
     });
+
+    // Stock adjustment item dropdown
+    const adjustSelect = document.getElementById('adjustItemSelect');
+    adjustSelect.innerHTML = '<option value="">Select Item</option>';
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name;
+      adjustSelect.appendChild(opt);
+    });
   } catch (err) {
     console.error('Failed to load items:', err);
   }
@@ -305,6 +318,8 @@ document.getElementById('addItemBtn').addEventListener('click', async () => {
   const manufacturer = document.getElementById('newItemManufacturer').value;
   const unit = document.getElementById('newItemUnit').value;
   const gst_percent = document.getElementById('newItemGst').value;
+  const item_group = document.getElementById('newItemGroup').value;
+  const schedule_type = document.getElementById('newItemSchedule').value;
   const msgDiv = document.getElementById('addItemMsg');
 
   msgDiv.textContent = '';
@@ -320,7 +335,7 @@ document.getElementById('addItemBtn').addEventListener('click', async () => {
     const response = await fetch(`${API_URL}/api/items`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-      body: JSON.stringify({ name, generic_name, manufacturer, unit, gst_percent })
+      body: JSON.stringify({ name, generic_name, manufacturer, unit, gst_percent, item_group, schedule_type })
     });
     const data = await response.json();
 
@@ -346,7 +361,108 @@ document.getElementById('addItemBtn').addEventListener('click', async () => {
   }
 });
 
-// ============ BILLING ============
+// ============ STOCK ADJUSTMENT ============
+
+document.getElementById('adjustItemSelect').addEventListener('change', async () => {
+  const itemId = document.getElementById('adjustItemSelect').value;
+  const batchSelect = document.getElementById('adjustBatchSelect');
+  batchSelect.innerHTML = '<option value="">Select Batch</option>';
+
+  if (!itemId) return;
+
+  try {
+    const response = await fetch(`${API_URL}/api/items/${itemId}/batches`, {
+      headers: { 'Authorization': `Bearer ${currentToken}` }
+    });
+    const batches = await response.json();
+
+    batches.forEach(batch => {
+      const opt = document.createElement('option');
+      opt.value = batch.id;
+      const expiry = new Date(batch.expiry_date).toLocaleDateString('en-IN');
+      opt.textContent = `${batch.batch_no} | Current: ${batch.quantity_available} | Exp: ${expiry}`;
+      batchSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load batches:', err);
+  }
+});
+
+document.getElementById('adjustStockBtn').addEventListener('click', async () => {
+  const batchId = document.getElementById('adjustBatchSelect').value;
+  const quantityChange = parseInt(document.getElementById('adjustQuantity').value);
+  const adjustmentType = document.getElementById('adjustType').value;
+  const reason = document.getElementById('adjustReason').value;
+  const msgDiv = document.getElementById('adjustMsg');
+
+  msgDiv.textContent = '';
+  msgDiv.className = '';
+
+  if (!batchId || !quantityChange || !reason) {
+    msgDiv.textContent = 'Select a batch, enter a quantity, and give a reason.';
+    msgDiv.className = 'error';
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/inventory/adjust`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+      body: JSON.stringify({ batch_id: batchId, quantity_change: quantityChange, reason, adjustment_type: adjustmentType })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      msgDiv.textContent = data.error || 'Adjustment failed.';
+      msgDiv.className = 'error';
+      return;
+    }
+
+    msgDiv.textContent = `Stock updated. New quantity: ${data.new_quantity}`;
+    msgDiv.className = 'success';
+
+    document.getElementById('adjustQuantity').value = '';
+    document.getElementById('adjustReason').value = '';
+    document.getElementById('adjustItemSelect').value = '';
+    document.getElementById('adjustBatchSelect').innerHTML = '<option value="">Select Batch</option>';
+
+    loadStockReport();
+  } catch (err) {
+    msgDiv.textContent = 'Could not connect to server.';
+    msgDiv.className = 'error';
+    console.error(err);
+  }
+});
+
+async function loadStockReport() {
+  try {
+    const response = await fetch(`${API_URL}/api/inventory/stock-report`, {
+      headers: { 'Authorization': `Bearer ${currentToken}` }
+    });
+    const report = await response.json();
+    const tbody = document.getElementById('stockReportBody');
+
+    if (report.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">No items found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    report.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row.name}</td>
+        <td>${row.item_group || '-'}</td>
+        <td>${row.schedule_type === 'none' ? '-' : row.schedule_type}</td>
+        <td>${row.batch_count}</td>
+        <td>${row.total_stock}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Failed to load stock report:', err);
+  }
+}
 
 document.getElementById('billItemSelect').addEventListener('change', async () => {
   const itemId = document.getElementById('billItemSelect').value;

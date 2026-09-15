@@ -62,9 +62,9 @@
     .btn-primary:hover { background: #0a5555; }
     .btn-secondary { background: #eef3f3; color: #0d6b6b; border: 1px solid #0d6b6b; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .btn-danger { background: #d33; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
-    #addItemMsg, #billMsg, #purchaseMsg, #supplierMsg, #returnMsg { font-size: 13px; margin-top: 8px; min-height: 18px; }
-    #addItemMsg.success, #billMsg.success, #purchaseMsg.success, #supplierMsg.success, #returnMsg.success { color: #1a7a1a; }
-    #addItemMsg.error, #billMsg.error, #purchaseMsg.error, #supplierMsg.error, #returnMsg.error { color: #d33; }
+    #addItemMsg, #billMsg, #purchaseMsg, #supplierMsg, #returnMsg, #adjustMsg { font-size: 13px; margin-top: 8px; min-height: 18px; }
+    #addItemMsg.success, #billMsg.success, #purchaseMsg.success, #supplierMsg.success, #returnMsg.success, #adjustMsg.success { color: #1a7a1a; }
+    #addItemMsg.error, #billMsg.error, #purchaseMsg.error, #supplierMsg.error, #returnMsg.error, #adjustMsg.error { color: #d33; }
     .totals-box { text-align: right; margin-top: 12px; font-size: 14px; }
     .totals-box .grand-total { font-size: 20px; font-weight: bold; color: #0d6b6b; }
     .small-label { font-size: 12px; color: #666; margin-bottom: 4px; }
@@ -309,9 +309,52 @@
                 <option value="piece">Piece</option>
               </select>
               <input type="number" id="newItemGst" placeholder="GST %" value="12">
+              <input type="text" id="newItemGroup" placeholder="Item Group (e.g. Tablets)">
+              <select id="newItemSchedule">
+                <option value="none">No Schedule</option>
+                <option value="H">Schedule H</option>
+                <option value="H1">Schedule H1</option>
+                <option value="X">Schedule X</option>
+              </select>
             </div>
             <button class="btn-primary" id="addItemBtn">Add Item</button>
             <div id="addItemMsg"></div>
+          </div>
+
+          <div class="card">
+            <h2>Adjust Stock</h2>
+            <div class="form-row">
+              <select id="adjustItemSelect">
+                <option value="">Select Item</option>
+              </select>
+              <select id="adjustBatchSelect">
+                <option value="">Select Batch</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <input type="number" id="adjustQuantity" placeholder="Quantity (+add / -remove)">
+              <select id="adjustType">
+                <option value="correction">Correction</option>
+                <option value="damage">Damage</option>
+                <option value="theft">Theft/Loss</option>
+                <option value="opening_balance">Opening Balance</option>
+              </select>
+              <input type="text" id="adjustReason" placeholder="Reason (required)">
+              <button class="btn-primary" id="adjustStockBtn">Adjust Stock</button>
+            </div>
+            <div id="adjustMsg"></div>
+          </div>
+
+          <div class="card">
+            <h2>Stock Report (Item-wise)</h2>
+            <table>
+              <thead>
+                <tr><th>Item</th><th>Group</th><th>Schedule</th><th>Batches</th><th>Total Stock</th></tr>
+              </thead>
+              <tbody id="stockReportBody">
+                <tr><td colspan="5">Loading...</td></tr>
+              </tbody>
+            </table>
           </div>
 
           <div class="card">
