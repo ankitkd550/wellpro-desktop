@@ -76,34 +76,73 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   document.getElementById('password').value = '';
 });
 
-// ============ TAB NAVIGATION ============
+// ============ NAVIGATION (Sidebar + Top Menu) ============
 
 function switchToTab(pageId) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const targetBtn = document.querySelector(`.tab-btn[data-page="${pageId}"]`);
-  if (targetBtn) targetBtn.classList.add('active');
+
+  const targetSidebar = document.querySelector(`.sidebar-item[data-page="${pageId}"]`);
+  if (targetSidebar) targetSidebar.classList.add('active');
   const targetPage = document.getElementById(pageId);
   if (targetPage) targetPage.classList.add('active');
+
+  document.querySelectorAll('.menu-item.open').forEach(m => m.classList.remove('open'));
 
   if (pageId === 'dashboardPage') {
     loadDashboard();
   }
+  if (pageId === 'returnsPage') {
+    loadInvoicesForReturn();
+  }
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
+// Sidebar quick access clicks
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', () => switchToTab(item.dataset.page));
+});
+
+// Top menu dropdown items navigate to a page
+document.querySelectorAll('.dropdown button[data-page]').forEach(btn => {
   btn.addEventListener('click', () => switchToTab(btn.dataset.page));
 });
 
-// "Open in New Window" buttons - asks the main process to open a fresh window
-// focused on that specific page
-document.querySelectorAll('.new-window-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    ipcRenderer.send('open-window', btn.dataset.page);
+// Top menu - click to open/close its dropdown
+document.querySelectorAll('.menu-item').forEach(menuItem => {
+  const menuBtn = menuItem.querySelector('.menu-btn');
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wasOpen = menuItem.classList.contains('open');
+    document.querySelectorAll('.menu-item.open').forEach(m => m.classList.remove('open'));
+    if (!wasOpen) menuItem.classList.add('open');
   });
 });
 
-// If this window was opened with a specific page requested (via hash), jump to it
+// Clicking anywhere else closes any open dropdown
+document.addEventListener('click', () => {
+  document.querySelectorAll('.menu-item.open').forEach(m => m.classList.remove('open'));
+});
+
+// Keyboard shortcuts: F2 New Sale, F3 New Purchase, F4 Sales Return, F5 Inventory, F6 Dashboard
+window.addEventListener('keydown', (e) => {
+  const dashboardVisible = document.getElementById('dashboardScreen').style.display !== 'none';
+  if (!dashboardVisible) return;
+
+  const shortcutMap = {
+    'F2': 'billingPage',
+    'F3': 'purchasePage',
+    'F4': 'returnsPage',
+    'F5': 'inventoryPage',
+    'F6': 'dashboardPage'
+  };
+
+  if (shortcutMap[e.key]) {
+    e.preventDefault(); // stop F5 from refreshing the window, etc.
+    switchToTab(shortcutMap[e.key]);
+  }
+});
+
+// If this window was opened focused on one specific page (via hash), jump to it
 window.addEventListener('DOMContentLoaded', () => {
   const requestedPage = window.location.hash.replace('#', '');
   if (requestedPage) {
@@ -676,6 +715,186 @@ document.getElementById('completePurchaseBtn').addEventListener('click', async (
     purchaseCart = [];
     renderPurchaseCart();
     document.getElementById('purchaseInvoiceNo').value = '';
+  } catch (err) {
+    msgDiv.textContent = 'Could not connect to server.';
+    msgDiv.className = 'error';
+    console.error(err);
+  }
+});
+
+// ============ SALES RETURNS ============
+
+let returnCart = [];
+let currentReturnInvoiceId = null;
+
+async function loadInvoicesForReturn() {
+  try {
+    const response = await fetch(`${API_URL}/api/sales`, {
+      headers: { 'Authorization': `Bearer ${currentToken}` }
+    });
+    const sales = await response.json();
+
+    const select = document.getElementById('returnInvoiceSelect');
+    select.innerHTML = '<option value="">Select Invoice</option>';
+    sales.forEach(sale => {
+      const opt = document.createElement('option');
+      opt.value = sale.id;
+      const date = new Date(sale.invoice_date).toLocaleDateString('en-IN');
+      opt.textContent = `${sale.invoice_no} | ${date} | ₹${sale.total_amount}`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load invoices:', err);
+  }
+}
+
+document.getElementById('returnInvoiceSelect').addEventListener('change', async () => {
+  const invoiceId = document.getElementById('returnInvoiceSelect').value;
+  const tbody = document.getElementById('returnInvoiceItemsBody');
+  currentReturnInvoiceId = invoiceId;
+  returnCart = [];
+  renderReturnCart();
+
+  if (!invoiceId) {
+    tbody.innerHTML = '<tr><td colspan="6">Select an invoice to see its items.</td></tr>';
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/sales/${invoiceId}`, {
+      headers: { 'Authorization': `Bearer ${currentToken}` }
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      tbody.innerHTML = `<tr><td colspan="6">${data.error || 'Failed to load invoice.'}</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = '';
+    data.items.forEach(line => {
+      const returnable = line.quantity - (line.returned_quantity || 0);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${line.item_name}</td>
+        <td>${line.batch_no}</td>
+        <td>${line.quantity}</td>
+        <td>${line.returned_quantity || 0}</td>
+        <td><input type="number" min="0" max="${returnable}" style="width: 70px;" data-line='${JSON.stringify(line)}' class="return-qty-input" ${returnable === 0 ? 'disabled' : ''}></td>
+        <td><button class="btn-secondary add-return-line-btn" ${returnable === 0 ? 'disabled' : ''}>Add</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    tbody.querySelectorAll('.add-return-line-btn').forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('tr');
+        const input = row.querySelector('.return-qty-input');
+        const line = JSON.parse(input.dataset.line);
+        const qty = parseInt(input.value);
+        const returnable = line.quantity - (line.returned_quantity || 0);
+
+        if (!qty || qty <= 0 || qty > returnable) {
+          alert(`Enter a valid quantity (max ${returnable}).`);
+          return;
+        }
+
+        const amount = (line.rate * qty) * (1 + line.gst_percent / 100);
+
+        returnCart.push({
+          invoice_item_id: line.id,
+          item_name: line.item_name,
+          batch_no: line.batch_no,
+          quantity: qty,
+          amount: amount
+        });
+
+        input.value = '';
+        renderReturnCart();
+      });
+    });
+  } catch (err) {
+    console.error('Failed to load invoice details:', err);
+  }
+});
+
+function renderReturnCart() {
+  const tbody = document.getElementById('returnCartBody');
+
+  if (returnCart.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5">No items added yet.</td></tr>';
+  } else {
+    tbody.innerHTML = '';
+    returnCart.forEach((line, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${line.item_name}</td>
+        <td>${line.batch_no}</td>
+        <td>${line.quantity}</td>
+        <td>₹${line.amount.toFixed(2)}</td>
+        <td><button class="btn-danger" data-index="${index}">Remove</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    tbody.querySelectorAll('.btn-danger').forEach(btn => {
+      btn.addEventListener('click', () => {
+        returnCart.splice(parseInt(btn.dataset.index), 1);
+        renderReturnCart();
+      });
+    });
+  }
+
+  const total = returnCart.reduce((sum, line) => sum + line.amount, 0);
+  document.getElementById('returnTotal').textContent = total.toFixed(2);
+}
+
+document.getElementById('completeReturnBtn').addEventListener('click', async () => {
+  const msgDiv = document.getElementById('returnMsg');
+  msgDiv.textContent = '';
+  msgDiv.className = '';
+
+  if (!currentReturnInvoiceId) {
+    msgDiv.textContent = 'Select an invoice first.';
+    msgDiv.className = 'error';
+    return;
+  }
+
+  if (returnCart.length === 0) {
+    msgDiv.textContent = 'Add at least one item to return.';
+    msgDiv.className = 'error';
+    return;
+  }
+
+  const reason = document.getElementById('returnReason').value;
+
+  const items = returnCart.map(line => ({
+    invoice_item_id: line.invoice_item_id,
+    quantity: line.quantity
+  }));
+
+  try {
+    const response = await fetch(`${API_URL}/api/sales/${currentReturnInvoiceId}/return`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+      body: JSON.stringify({ reason, items })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      msgDiv.textContent = data.error || 'Return failed.';
+      msgDiv.className = 'error';
+      return;
+    }
+
+    msgDiv.textContent = `Return processed! Return No: ${data.return_no} | Refund: ₹${data.total_refund_amount}`;
+    msgDiv.className = 'success';
+
+    returnCart = [];
+    renderReturnCart();
+    document.getElementById('returnReason').value = '';
+    document.getElementById('returnInvoiceSelect').value = '';
+    document.getElementById('returnInvoiceItemsBody').innerHTML = '<tr><td colspan="6">Select an invoice to see its items.</td></tr>';
   } catch (err) {
     msgDiv.textContent = 'Could not connect to server.';
     msgDiv.className = 'error';
