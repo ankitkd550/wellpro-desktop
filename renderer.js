@@ -48,6 +48,9 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     localStorage.setItem('wellpro_license_key', licenseKey);
     currentToken = data.token;
     document.getElementById('welcomeText').textContent = `WellPro ERP — ${data.user.full_name}`;
+    const statusUserEl = document.getElementById('statusUser');
+    if (statusUserEl) statusUserEl.textContent = data.user.full_name;
+    startStatusClock();
 
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboardScreen').style.display = 'block';
@@ -75,6 +78,16 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   document.getElementById('username').value = '';
   document.getElementById('password').value = '';
 });
+
+// Bottom status bar clock (Tally-style)
+function startStatusClock() {
+  function tick() {
+    const el = document.getElementById('statusClock');
+    if (el) el.textContent = new Date().toLocaleString('en-IN');
+  }
+  tick();
+  setInterval(tick, 1000);
+}
 
 // ============ NAVIGATION (Sidebar + Top Menu) ============
 
