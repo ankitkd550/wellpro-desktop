@@ -3,71 +3,212 @@
 <head>
   <meta charset="UTF-8">
   <title>WellPro ERP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; font-family: Segoe UI, Arial, sans-serif; }
-    body { margin: 0; background: #f4f6f8; }
+    :root {
+      --ink: #211E1A;
+      --parchment: #F7F4EE;
+      --parchment-deep: #EFEAE0;
+      --green: #1D3A32;
+      --green-deep: #142822;
+      --green-mid: #2B5147;
+      --amber: #C17817;
+      --amber-light: #E4A250;
+      --clay: #B23A2E;
+      --sage: #E7EFE9;
+      --card: #FFFFFF;
+      --border: #E4DFD3;
+      --shadow-1: 0 1px 2px rgba(33,30,26,0.06);
+      --shadow-2: 0 1px 2px rgba(33,30,26,0.08), 0 8px 20px -6px rgba(33,30,26,0.16);
+      --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--parchment);
+      color: var(--ink);
+      font-family: 'IBM Plex Sans', Arial, sans-serif;
+    }
+    h1, h2, .brand-word { font-family: 'Fraunces', Georgia, serif; }
 
     /* LOGIN SCREEN */
-    #loginScreen { display: flex; align-items: center; justify-content: center; height: 100vh; }
-    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 340px; }
-    .login-box h1 { color: #0d6b6b; margin-top: 0; font-size: 22px; }
-    .login-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-    .login-box button { width: 100%; padding: 12px; margin-top: 12px; background: #0d6b6b; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
-    .login-box button:hover { background: #0a5555; }
-    #loginError { color: #d33; font-size: 13px; margin-top: 8px; min-height: 18px; }
-    #changeLicenseLink { display: none; font-size: 12px; color: #0d6b6b; text-align: center; margin-top: 10px; cursor: pointer; text-decoration: underline; }
+    #loginScreen {
+      display: flex; align-items: center; justify-content: center; height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(193,120,23,0.10), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(29,58,50,0.10), transparent 45%),
+        var(--parchment);
+    }
+    .login-box {
+      background: var(--card); padding: 44px 40px; border-radius: 14px;
+      box-shadow: var(--shadow-2);
+      border-top: 3px solid var(--amber);
+      width: 350px;
+    }
+    .login-box h1 { color: var(--green); margin: 0 0 4px; font-size: 24px; font-weight: 600; }
+    .login-box .login-sub { color: #7A7367; font-size: 12.5px; margin-bottom: 20px; }
+    .login-box input {
+      width: 100%; padding: 11px 12px; margin: 7px 0; border: 1px solid var(--border);
+      border-radius: 7px; font-size: 14px; font-family: inherit; background: #FCFBF8;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .login-box input:focus {
+      outline: none; border-color: var(--green-mid);
+      box-shadow: 0 0 0 3px rgba(43,81,71,0.12);
+    }
+    .login-box button {
+      width: 100%; padding: 12px; margin-top: 14px;
+      background: linear-gradient(180deg, var(--green-mid), var(--green));
+      color: #F3F0E8; border: none; border-radius: 8px; font-size: 14.5px; font-weight: 500;
+      cursor: pointer; box-shadow: var(--shadow-inset), 0 2px 0 var(--green-deep), 0 6px 14px -4px rgba(20,40,34,0.5);
+      transition: transform .08s, box-shadow .08s;
+    }
+    .login-box button:hover { filter: brightness(1.06); }
+    .login-box button:active { transform: translateY(2px); box-shadow: var(--shadow-inset), 0 0 0 var(--green-deep); }
+    #loginError { color: var(--clay); font-size: 13px; margin-top: 10px; min-height: 18px; }
+    #changeLicenseLink { display: none; font-size: 12px; color: var(--green-mid); text-align: center; margin-top: 12px; cursor: pointer; text-decoration: underline; }
 
     /* DASHBOARD SHELL */
     #dashboardScreen { display: none; }
 
-    .topbar { background: #0d6b6b; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .topbar-title { font-size: 16px; font-weight: bold; }
-    #logoutBtn { background: transparent; border: 1px solid white; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+    .topbar {
+      background: var(--parchment); color: var(--green);
+      padding: 12px 22px; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-title { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 8px; letter-spacing: .2px; }
+    .topbar-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); display: inline-block; }
+    #logoutBtn {
+      background: transparent; border: 1px solid var(--green-mid); color: var(--green);
+      padding: 7px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; font-family: inherit;
+      transition: background .15s;
+    }
+    #logoutBtn:hover { background: var(--sage); }
 
     /* TOP MENU BAR WITH DROPDOWNS */
-    .menu-bar { background: #0a5555; display: flex; padding: 0 12px; }
+    .menu-bar { background: var(--green-deep); display: flex; padding: 0 14px; }
     .menu-item { position: relative; }
-    .menu-btn { background: transparent; border: none; color: #dcefef; padding: 10px 16px; cursor: pointer; font-size: 14px; }
-    .menu-btn:hover, .menu-item.open .menu-btn { background: #0d6b6b; color: white; }
-    .dropdown { display: none; position: absolute; top: 100%; left: 0; background: white; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 0 0 6px 6px; z-index: 50; overflow: hidden; }
+    .menu-btn {
+      background: transparent; border: none; color: #C9D6D0; padding: 10px 18px;
+      cursor: pointer; font-size: 13.5px; font-family: inherit; letter-spacing: .2px;
+      transition: background .15s, color .15s;
+    }
+    .menu-btn:hover, .menu-item.open .menu-btn { background: var(--green-mid); color: #F3F0E8; }
+    .dropdown {
+      display: none; position: absolute; top: 100%; left: 0; background: var(--card);
+      min-width: 230px; box-shadow: var(--shadow-2); border-radius: 0 0 8px 8px; z-index: 50; overflow: hidden;
+      border-top: 2px solid var(--amber);
+    }
     .menu-item.open .dropdown { display: block; }
-    .dropdown button { width: 100%; text-align: left; background: none; border: none; padding: 10px 14px; cursor: pointer; font-size: 13px; color: #333; display: flex; justify-content: space-between; }
-    .dropdown button:hover { background: #eef3f3; }
-    .shortcut-tag { color: #888; font-size: 11px; }
+    .dropdown button {
+      width: 100%; text-align: left; background: none; border: none; padding: 11px 16px;
+      cursor: pointer; font-size: 13px; font-family: inherit; color: var(--ink);
+      display: flex; justify-content: space-between; border-bottom: 1px solid #F1EEE6;
+    }
+    .dropdown button:last-child { border-bottom: none; }
+    .dropdown button:hover { background: var(--sage); }
+    .shortcut-tag {
+      color: #8A8375; font-size: 10.5px; font-weight: 500; letter-spacing: .3px;
+      background: var(--parchment-deep); padding: 1px 6px; border-radius: 4px;
+    }
 
     /* LAYOUT: SIDEBAR + CONTENT */
-    .main-layout { display: flex; height: calc(100vh - 88px); }
-    .sidebar { width: 190px; background: white; border-right: 1px solid #e0e0e0; padding: 14px 0; overflow-y: auto; }
-    .sidebar-title { font-size: 11px; color: #999; text-transform: uppercase; padding: 4px 16px 8px; }
-    .sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; font-size: 13px; color: #333; }
-    .sidebar-item:hover { background: #eef3f3; }
-    .sidebar-item.active { background: #0d6b6b; color: white; }
-    .sidebar-item .shortcut-tag { color: inherit; opacity: 0.6; }
-    .sidebar-new-window { background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6; font-size: 13px; }
-    .sidebar-new-window:hover { opacity: 1; }
+    .main-layout { display: flex; height: calc(100vh - 90px); }
+    .sidebar {
+      width: 208px; background: linear-gradient(180deg, var(--green), var(--green-deep));
+      padding: 18px 0; overflow-y: auto; box-shadow: 2px 0 12px -4px rgba(20,40,34,0.35);
+    }
+    .sidebar-title {
+      font-size: 10.5px; color: #8FA79E; text-transform: uppercase; letter-spacing: 1px;
+      padding: 4px 20px 10px; font-weight: 600;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px; padding: 11px 18px; cursor: pointer;
+      font-size: 13.5px; color: #D3DDD8; position: relative; border-left: 3px solid transparent;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.85; }
+    .sidebar-item .side-label { flex: 1; }
+    .sidebar-item:hover { background: rgba(255,255,255,0.05); color: #F3F0E8; }
+    .sidebar-item.active {
+      background: rgba(193,120,23,0.16); color: #FBF3E7; border-left-color: var(--amber);
+    }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-item .shortcut-tag { background: rgba(255,255,255,0.08); color: #B9C4BF; }
+    .sidebar-item.active .shortcut-tag { background: rgba(193,120,23,0.25); color: #F0D9B5; }
 
-    .content { flex: 1; padding: 20px; overflow-y: auto; }
+    .content { flex: 1; padding: 24px; overflow-y: auto; }
     .page { display: none; }
     .page.active { display: block; }
 
     /* SHARED WIDGETS */
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-top: 12px; }
-    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
-    th { background: #eef3f3; }
-    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .card h2 { margin-top: 0; font-size: 17px; color: #333; }
+    table {
+      width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px;
+      overflow: hidden; margin-top: 12px; box-shadow: var(--shadow-1); border: 1px solid var(--border);
+    }
+    th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid #F1EEE6; font-size: 13px; }
+    th {
+      background: var(--parchment-deep); color: var(--green); font-weight: 600;
+      font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #FBFAF6; }
+
+    .card {
+      background: var(--card); padding: 22px 24px; border-radius: 12px;
+      box-shadow: var(--shadow-2); margin-bottom: 22px;
+      border-top: 3px solid var(--green-mid);
+    }
+    .card h2 {
+      margin: 0 0 16px; font-size: 17px; color: var(--green); font-weight: 600;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
     .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
-    .form-row input, .form-row select { flex: 1; min-width: 140px; padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-    .btn-primary { background: #0d6b6b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .btn-primary:hover { background: #0a5555; }
-    .btn-secondary { background: #eef3f3; color: #0d6b6b; border: 1px solid #0d6b6b; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-    .btn-danger { background: #d33; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
-    #addItemMsg, #billMsg, #purchaseMsg, #supplierMsg, #returnMsg, #adjustMsg { font-size: 13px; margin-top: 8px; min-height: 18px; }
-    #addItemMsg.success, #billMsg.success, #purchaseMsg.success, #supplierMsg.success, #returnMsg.success, #adjustMsg.success { color: #1a7a1a; }
-    #addItemMsg.error, #billMsg.error, #purchaseMsg.error, #supplierMsg.error, #returnMsg.error, #adjustMsg.error { color: #d33; }
-    .totals-box { text-align: right; margin-top: 12px; font-size: 14px; }
-    .totals-box .grand-total { font-size: 20px; font-weight: bold; color: #0d6b6b; }
-    .small-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .form-row input, .form-row select {
+      flex: 1; min-width: 140px; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 7px; font-size: 13.5px; font-family: inherit; background: #FCFBF8;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-row input:focus, .form-row select:focus {
+      outline: none; border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(43,81,71,0.1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--green-mid), var(--green));
+      color: #F3F0E8; border: none; padding: 10px 22px; border-radius: 7px; cursor: pointer;
+      font-size: 13.5px; font-weight: 500; font-family: inherit;
+      box-shadow: var(--shadow-inset), 0 2px 0 var(--green-deep), 0 4px 10px -3px rgba(20,40,34,0.4);
+      transition: transform .08s, filter .08s;
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary:active { transform: translateY(2px); box-shadow: var(--shadow-inset), 0 0 0 var(--green-deep); }
+
+    .btn-secondary {
+      background: var(--card); color: var(--green); border: 1px solid var(--green-mid);
+      padding: 9px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; font-family: inherit;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--sage); }
+
+    .btn-danger {
+      background: linear-gradient(180deg, #C2493C, var(--clay));
+      color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+      font-size: 11.5px; font-family: inherit; box-shadow: 0 1px 0 #8A2A21;
+    }
+    .btn-danger:hover { filter: brightness(1.08); }
+
+    #addItemMsg, #billMsg, #purchaseMsg, #supplierMsg, #returnMsg, #adjustMsg {
+      font-size: 13px; margin-top: 10px; min-height: 18px; font-weight: 500;
+    }
+    #addItemMsg.success, #billMsg.success, #purchaseMsg.success, #supplierMsg.success, #returnMsg.success, #adjustMsg.success { color: #2E7D4F; }
+    #addItemMsg.error, #billMsg.error, #purchaseMsg.error, #supplierMsg.error, #returnMsg.error, #adjustMsg.error { color: var(--clay); }
+
+    .totals-box { text-align: right; margin-top: 14px; font-size: 13.5px; color: #5C5648; }
+    .totals-box .grand-total {
+      font-size: 22px; font-weight: 700; color: var(--green); font-family: 'Fraunces', serif;
+    }
+    .small-label { font-size: 11.5px; color: #8A8375; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -75,7 +216,8 @@
   <!-- LOGIN SCREEN -->
   <div id="loginScreen">
     <div class="login-box">
-      <h1>WellPro ERP Login</h1>
+      <h1>WellPro ERP</h1>
+      <div class="login-sub">Sign in to your pharmacy account</div>
       <div id="licenseKeyRow">
         <input type="text" id="licenseKey" placeholder="License Key (e.g. WELLPRO-XXXX-XXXX-XXXX)">
       </div>
@@ -90,7 +232,7 @@
   <!-- MAIN APP -->
   <div id="dashboardScreen">
     <div class="topbar">
-      <div class="topbar-title" id="welcomeText">WellPro ERP</div>
+      <div class="topbar-title"><span class="dot"></span><span class="brand-word" id="welcomeText">WellPro ERP</span></div>
       <button id="logoutBtn">Logout</button>
     </div>
 
@@ -128,23 +270,28 @@
       <div class="sidebar">
         <div class="sidebar-title">Quick Access</div>
         <div class="sidebar-item active" data-page="billingPage">
-          <span>🧾 New Sale</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+          <span class="side-label">New Sale</span>
           <span class="shortcut-tag">F2</span>
         </div>
         <div class="sidebar-item" data-page="purchasePage">
-          <span>📦 New Purchase</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5-9 5-9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+          <span class="side-label">New Purchase</span>
           <span class="shortcut-tag">F3</span>
         </div>
         <div class="sidebar-item" data-page="returnsPage">
-          <span>↩ Sales Return</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 5 5v1"/></svg>
+          <span class="side-label">Sales Return</span>
           <span class="shortcut-tag">F4</span>
         </div>
         <div class="sidebar-item" data-page="inventoryPage">
-          <span>💊 Inventory</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M3 11h18"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span class="side-label">Inventory</span>
           <span class="shortcut-tag">F5</span>
         </div>
         <div class="sidebar-item" data-page="dashboardPage">
-          <span>📊 Dashboard</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V10M11 19V5M18 19v-7"/></svg>
+          <span class="side-label">Dashboard</span>
           <span class="shortcut-tag">F6</span>
         </div>
       </div>
